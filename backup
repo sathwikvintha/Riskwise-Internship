@@ -1,0 +1,204 @@
+from flask import Flask, render_template
+import yfinance as yf
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+app = Flask(__name__)
+
+# Function to fetch NIFTY50 stocks data
+def fetch_nifty50_data():
+    tickers = [
+        'RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 
+        'ICICIBANK.NS', 'KOTAKBANK.NS', 'LT.NS', 'ITC.NS', 'SBIN.NS', 
+        'BHARTIARTL.NS', 'AXISBANK.NS', 'BAJFINANCE.NS', 'HCLTECH.NS', 
+        'MARUTI.NS', 'ASIANPAINT.NS', 'ONGC.NS', 'TITAN.NS', 'ADANIGREEN.NS',
+        'POWERGRID.NS', 'ULTRACEMCO.NS', 'NESTLEIND.NS', 'WIPRO.NS'
+    ]
+    data = {}
+    for ticker in tickers:
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="5d")
+        if not hist.empty:
+            latest_data = hist.iloc[-1]  # Get the latest data
+            data[ticker] = {
+                'Date': latest_data.name.strftime("%Y-%m-%d"),
+                'Open': latest_data['Open'],
+                'High': latest_data['High'],
+                'Low': latest_data['Low'],
+                'Close': latest_data['Close'],
+                'Volume': latest_data['Volume'],
+                'History': hist['Close'].tolist()  # Convert Pandas Series to list
+            }
+            data[ticker]['Prediction'] = predict_next_close(hist['Close'].tolist())
+    
+    sorted_data = dict(sorted(data.items(), key=lambda item: item[1]['Close'], reverse=True)[:9])
+    return sorted_data
+
+# Function to predict the next closing price
+def predict_next_close(history):
+    if len(history) < 5:
+        return None
+    x = np.array(range(5)).reshape(-1, 1)
+    y = np.array(history[-5:]).reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(x, y)
+    prediction = model.predict([[5]])
+    return prediction[0][0]
+
+@app.route('/')
+def index():
+    data = fetch_nifty50_data()
+    return render_template('index.html', data=data)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NIFTY50 Stocks Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 95%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px 0;
+        }
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:nth-child(odd) {
+            background-color: #fff;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        #chart {
+            width: 100%;
+            height: 600px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+            table, th, td {
+                font-size: 14px;
+                padding: 8px;
+            }
+            #chart {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            table, th, td {
+                font-size: 12px;
+                padding: 6px;
+            }
+            #chart {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NIFTY50 Stocks Dashboard</h1>
+        <div class="table-container">
+            <h2>Top 10 Stocks</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Open</th>
+                        <th>High</th>
+                        <th>Low</th>
+                        <th>Close</th>
+                        <th>Volume</th>
+                        <th>Prediction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticker, stock_data in data.items() %}
+                    <tr>
+                        <td>{{ ticker }}</td>
+                        <td>{{ stock_data['Open'] }}</td>
+                        <td>{{ stock_data['High'] }}</td>
+                        <td>{{ stock_data['Low'] }}</td>
+                        <td>{{ stock_data['Close'] }}</td>
+                        <td>{{ stock_data['Volume'] }}</td>
+                        <td>{{ stock_data['Prediction'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="chart"></div>
+    </div>
+    <script>
+        var data = {{ data | tojson }};
+
+        var options = {
+            chart: {
+                type: 'area',
+                height: 600
+            },
+            series: [],
+            xaxis: {
+                categories: data[Object.keys(data)[0]]['Date']
+            }
+        };
+
+        Object.entries(data).forEach(([key, value]) => {
+            options.series.push({
+                name: key,
+                data: value['History']
+            });
+        });
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+    </script>
+</body>
+</html>
+
+
+
