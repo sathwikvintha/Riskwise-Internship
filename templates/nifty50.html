@@ -1,95 +1,145 @@
-{% extends 'base.html' %} {% block title %}Nifty50{% endblock %} {% block
-content %}
-<div class="container">
-  <h1>NIFTY50 Stocks Dashboard</h1>
-  <div class="table-container">
-    <h2>Top 9 Stocks</h2>
-    <table class="styled-table">
-      <thead>
-        <tr>
-          <th>Company</th>
-          <th>Open</th>
-          <th>High</th>
-          <th>Low</th>
-          <th>Close</th>
-          <th>Volume</th>
-          <th>Prediction</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ticker, stock_data in data.items() %}
-        <tr class="{{ 'up' if stock_data['Trend'] == 'up' else 'down' }}">
-          <td>{{ ticker }}</td>
-          <td>{{ stock_data['Open'] }}</td>
-          <td>{{ stock_data['High'] }}</td>
-          <td>{{ stock_data['Low'] }}</td>
-          <td>{{ stock_data['Close'] }}</td>
-          <td>{{ stock_data['Volume'] }}</td>
-          <td>{{ stock_data['Prediction'] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <div id="chart"></div>
-  <div id="prediction-chart"></div>
-  <img src="{{ heatmap_path }}" alt="Heatmap" />
-</div>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NIFTY50 Stocks Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nifty50.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Nifty50 Stocks Dashboard</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/nifty50">Nifty50</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/nifty100">Nifty100</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Nifty50 Stocks</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Open</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Close</th>
+                    <th>Volume</th>
+                    <th>% Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticker, stock_data in nifty50_data.items() %}
+                <tr class="{{ 'up' if stock_data['Trend'] == 'up' else 'down' }}">
+                    <td>{{ ticker }}</td>
+                    <td>{{ stock_data['Open'] }}</td>
+                    <td>{{ stock_data['High'] }}</td>
+                    <td>{{ stock_data['Low'] }}</td>
+                    <td>{{ stock_data['Close'] }}</td>
+                    <td>{{ stock_data['Volume'] }}</td>
+                    <td class="{{ 'green' if stock_data['Trend'] == 'up' else 'red' }}">{{ stock_data['Change'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div id="chart"></div>
+        <div id="prediction-chart" class="chart-container"></div>
+        <div class="heatmap-container">
+            <h2>Volume and % Change Heat Map</h2>
+            <img src="{{ url_for('static', filename='heatmap.png') }}" alt="Heat Map">
+        </div>
+
+    <!-- JavaScript and jQuery dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js" integrity="sha384-7BKDiWxrFI3eMllP5BzFi9SHDN33T2qEMfYEL/BuqRU6lu7u4d83xzJzwi4Z+XjB" crossorigin="anonymous"></>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shCk5PLbIy9rBf81jPVgce0odDhPex4t+0pbF" crossorigin="anonymous"></script>
 <script>
-  var data = {{ data | tojson }};
-  var options = {
-      series: Object.keys(data).map(ticker => {
-          return {
-              name: ticker,
-              data: data[ticker].History
-          };
-      }),
-      chart: {
-          type: 'line',
-          height: 350
-      },
-      title: {
-          text: 'Stock Prices Over Last 5 Days',
-          align: 'left'
-      },
-      xaxis: {
-          categories: data[Object.keys(data)[0]].History.map((_, index) => `Day ${index + 1}`)
-      },
-      yaxis: {
-          title: {
-              text: 'Price'
-          }
-      }
-  };
-  var chart = new ApexCharts(document.querySelector("#chart"), options);
-  chart.render();
-
-  var predictionOptions = {
-      series: [{
-          name: "Predicted Close Price",
-          data: Object.keys(data).map(ticker => data[ticker].Prediction)
-      }],
-      chart: {
-          type: 'bar',
-          height: 350
-      },
-      title: {
-          text: 'Predicted Close Prices for Next Day',
-          align: 'left'
-      },
-      xaxis: {
-          categories: Object.keys(data)
-      },
-      yaxis: {
-          title: {
-              text: 'Price'
-          }
-      },
-      colors: ['#FF4560', '#00E396', '#775DD0', '#FEB019', '#FF4560', '#00E396', '#775DD0', '#FEB019']
-  };
-
-  var predictionChart = new ApexCharts(document.querySelector("#prediction-chart"), predictionOptions);
-  predictionChart.render();
+    $(document).ready(function(){
+        $('.navbar-toggler').click(function(){
+            $('.navbar-collapse').toggleClass('show');
+        });
+    });
 </script>
-{% endblock %}
+
+   <script>
+        var data = {{ profitable_stocks | tojson }};
+
+        // First chart for historical data
+        var options = {
+            chart: {
+                type: 'area',
+                height: 600
+            },
+            series: [],
+            xaxis: {
+                categories: data[Object.keys(data)[0]]['History'].map((_, i) => 'Day ' + (i + 1))
+            }
+        };
+
+        Object.entries(data).forEach(([key, value]) => {
+            options.series.push({
+                name: key,
+                data: value['History']
+            });
+        });
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+        
+        // Second chart for predictions
+        var predictions = [];
+        var companies = [];
+        Object.entries(data).forEach(([key, value]) => {
+            companies.push(key);
+            predictions.push(value.Prediction);
+        });
+
+        var predictionOptions = {
+            chart: {
+                type: 'bar',
+                height: 600
+            },
+            series: [{
+                name: 'Predicted Close',
+                data: predictions
+            }],
+            xaxis: {
+                categories: companies
+            }
+        };
+
+        var predictionChart = new ApexCharts(document.querySelector("#prediction-chart"), predictionOptions);
+        predictionChart.render();
+
+        function showProfitableStocks() {
+            document.getElementById('profitable-stocks').style.display = 'block';
+            document.getElementById('non-profitable-stocks').style.display = 'none';
+        }
+
+        function showNonProfitableStocks() {
+            document.getElementById('profitable-stocks').style.display = 'none';
+            document.getElementById('non-profitable-stocks').style.display = 'block';
+        }
+
+        // Initially display profitable stocks
+        showProfitableStocks();
+    </script>
+</body>
+</html>

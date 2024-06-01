@@ -79,7 +79,70 @@
       </div>
     </div>
 
-    <div class="container">{% block content %}{% endblock %}</div>
+   <div class="container">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Profitable vs Non-profitable Stocks</h5>
+      <button id="profitableBtn" class="btn btn-success" onclick="showProfitable()">Profitable Stocks</button>
+      <button id="nonProfitableBtn" class="btn btn-danger" onclick="showNonProfitable()">Non-profitable Stocks</button>
+    </div>
+    <div class="card-body">
+      <div id="profitableTable" class="table-responsive">
+        <table class="table table-bordered">
+          <thead class="thead-light">
+            <tr>
+              <th>Ticker</th>
+              <th>% Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticker, details in profitable.items() %}
+            <tr class="table-success">
+              <td>{{ ticker }}</td>
+              <td>{{"%0.2f" % details['% Change'] }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div id="nonProfitableTable" class="table-responsive" style="display:none;">
+        <table class="table table-bordered">
+          <thead class="thead-light">
+            <tr>
+              <th>Ticker</th>
+              <th>% Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticker, details in non_profitable.items() %}
+            <tr class="table-danger">
+              <td>{{ ticker }}</td>
+              <td>{{"%0.2f" % details['% Change'] }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% block content %}{% endblock %}
+</div>
+
+
+    <script>
+      function showProfitable() {
+        document.getElementById("profitableTable").style.display = "block";
+        document.getElementById("nonProfitableTable").style.display = "none";
+      }
+
+      function showNonProfitable() {
+        document.getElementById("profitableTable").style.display = "none";
+        document.getElementById("nonProfitableTable").style.display = "block";
+      }
+
+      // Default view
+      showProfitable();
+    </script>
 
     <script
       src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
