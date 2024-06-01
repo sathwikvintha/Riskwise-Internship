@@ -1,104 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>NIFTY50 Stocks Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>NIFTY50 Stocks Dashboard</h1>
-        <div class="table-container">
-            <h2>Top 9 Stocks</h2>
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        <th>Company</th>
-                        <th>Open</th>
-                        <th>High</th>
-                        <th>Low</th>
-                        <th>Close</th>
-                        <th>Volume</th>
-                        <th>Prediction</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ticker, stock_data in data.items() %}
-                    <tr class="{{ 'up' if stock_data['Trend'] == 'up' else 'down' }}">
-                        <td>{{ ticker }}</td>
-                        <td>{{ stock_data['Open'] }}</td>
-                        <td>{{ stock_data['High'] }}</td>
-                        <td>{{ stock_data['Low'] }}</td>
-                        <td>{{ stock_data['Close'] }}</td>
-                        <td>{{ stock_data['Volume'] }}</td>
-                        <td>{{ stock_data['Prediction'] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div id="chart"></div>
-        <div id="prediction-chart" class="chart-container"></div>
-        <div class="heatmap-container">
-            <h2>Volume and % Change Heat Map</h2>
-            <img src="{{ url_for('static', filename='heatmap.png') }}" alt="Heat Map">
-        </div>
-    </div>
-    <script>
-        var data = {{ data | tojson }};
-
-        // First chart for historical data
-        var options = {
-            chart: {
-                type: 'area',
-                height: 600
-            },
-            series: [],
-            xaxis: {
-                categories: data[Object.keys(data)[0]]['History'].map((_, i) => 'Day ' + (i + 1))
-            }
-        };
-
-        Object.entries(data).forEach(([key, value]) => {
-            options.series.push({
-                name: key,
-                data: value['History']
-            });
-        });
-
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
-        
-        // Second chart for predictions
-        var predictions = [];
-        var companies = [];
-        Object.entries(data).forEach(([key, value]) => {
-            companies.push(key);
-            predictions.push(value.Prediction);
-        });
-
-        var predictionOptions = {
-            chart: {
-                type: 'line',
-                height: 400,
-                width: '100%',
-                toolbar: {
-                    show: false
-                }
-            },
-            series: [{
-                name: 'Predictions',
-                data: predictions
-            }],
-            xaxis: {
-                categories: companies
-            },
-            colors: ['#FF4560', '#00E396', '#775DD0', '#FEB019', '#FF4560', '#00E396', '#775DD0', '#FEB019']
-        };
-
-        var predictionChart = new ApexCharts(document.querySelector("#prediction-chart"), predictionOptions);
-        predictionChart.render();
-    </script>
-</body>
-</html>
+{% extends 'base.html' %} {% block title %}Home{% endblock %} {% block content
+%}
+<div class="container">
+  <h1>Welcome to the Stock Dashboard</h1>
+  <p>Select a category to view stock details:</p>
+  <ul>
+    <li><a href="{{ url_for('nifty50') }}">Nifty50</a></li>
+    <li><a href="{{ url_for('nifty100') }}">Nifty100</a></li>
+    <li><a href="{{ url_for('sensex') }}">Sensex</a></li>
+  </ul>
+</div>
+{% endblock %}
