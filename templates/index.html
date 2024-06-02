@@ -46,7 +46,7 @@
                     </thead>
                     <tbody>
                         {% for ticker, stock_data in profitable_stocks.items() %}
-                        <tr class="up">
+                        <tr class="up" onclick="window.location.href='/stock/{{ ticker }}'">
                             <td>{{ ticker }}</td>
                             <td class="green">{{ stock_data['Change'] }}</td>
                         </tr>
@@ -68,7 +68,7 @@
                     </thead>
                     <tbody>
                         {% for ticker, stock_data in non_profitable_stocks.items() %}
-                        <tr class="down">
+                        <tr class="down" onclick="window.location.href='/stock/{{ ticker }}'">
                             <td>{{ ticker }}</td>
                             <td class="red">{{ stock_data['Change'] }}</td>
                         </tr>

@@ -56,6 +56,9 @@ th, td {
     text-align: center;
     color: black;
 }
+tr,td{
+    cursor: pointer;
+}
 th {
     background-color: #f2f2f2;
     color: #333;
@@ -116,7 +119,7 @@ h1, h2 {
 
 /* Color code % change values */
 .green {
-    color: rgb(8, 255, 8);
+    color: rgb(0, 82, 0);
 }
 
 .red {

@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import datetime
+
 
 app = Flask(__name__)
 
@@ -22,6 +24,35 @@ def fetch_nifty50_data():
         'SHREECEM.NS', 'CIPLA.NS', 'DRREDDY.NS', 'UPL.NS', 'APOLLOHOSP.NS',
         'SBILIFE.NS', 'HINDALCO.NS'
     ]
+    return fetch_stock_data(tickers)
+
+# Function to fetch NIFTY100 stocks data
+def fetch_nifty100_data():
+    tickers = [
+        'RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'HINDUNILVR.NS', 
+        'ICICIBANK.NS', 'KOTAKBANK.NS', 'LT.NS', 'ITC.NS', 'SBIN.NS', 
+        'BHARTIARTL.NS', 'AXISBANK.NS', 'BAJFINANCE.NS', 'HCLTECH.NS', 
+        'MARUTI.NS', 'ASIANPAINT.NS', 'ONGC.NS', 'TITAN.NS', 'ADANIGREEN.NS',
+        'POWERGRID.NS', 'ULTRACEMCO.NS', 'NESTLEIND.NS', 'WIPRO.NS',
+        'NTPC.NS', 'SUNPHARMA.NS', 'HDFC.NS', 'COALINDIA.NS', 'TATAMOTORS.NS',
+        'GRASIM.NS', 'ADANIPORTS.NS', 'BAJAJ-AUTO.NS', 'TATASTEEL.NS', 
+        'TECHM.NS', 'HEROMOTOCO.NS', 'JSWSTEEL.NS', 'DIVISLAB.NS', 'M&M.NS',
+        'BRITANNIA.NS', 'BPCL.NS', 'INDUSINDBK.NS', 'EICHERMOT.NS', 
+        'SHREECEM.NS', 'CIPLA.NS', 'DRREDDY.NS', 'UPL.NS', 'APOLLOHOSP.NS',
+        'SBILIFE.NS', 'HINDALCO.NS', 'ABBOTINDIA.NS', 'ADANIENT.NS', 'AMBUJACEM.NS', 
+        'AUROPHARMA.NS', 'BAJAJFINSV.NS', 'BANDHANBNK.NS', 'BANKBARODA.NS', 
+        'BERGEPAINT.NS', 'BOSCHLTD.NS', 'CADILAHC.NS', 'CHOLAFIN.NS', 
+        'DABUR.NS', 'DLF.NS', 'GAIL.NS', 'GLAXO.NS', 'GODREJCP.NS', 
+        'HAVELLS.NS', 'ICICIPRULI.NS', 'IGL.NS', 'INDIGO.NS', 'JINDALSTEL.NS', 
+        'LUPIN.NS', 'MCDOWELL-N.NS', 'MRF.NS', 'MUTHOOTFIN.NS', 'PEL.NS', 
+        'PETRONET.NS', 'PIDILITIND.NS', 'PNB.NS', 'SAIL.NS', 'TORNTPHARM.NS', 
+        'TVSMOTOR.NS', 'VEDL.NS', 'YESBANK.NS', 'ZEEL.NS'
+    ]
+    return fetch_stock_data(tickers)
+
+
+# General function to fetch stock data
+def fetch_stock_data(tickers):
     data = {}
     for ticker in tickers:
         stock = yf.Ticker(ticker)
@@ -72,7 +103,7 @@ def generate_heat_map(data):
     
     plt.figure(figsize=(10, 8))
     sns.heatmap(heatmap_data, annot=True, fmt=".2f", xticklabels=['Volume', '% Change'], yticklabels=tickers, cmap='coolwarm')
-    plt.title('Heat Map of NIFTY50 Stocks')
+    plt.title('Heat Map of NIFTY Stocks')
     heatmap_path = os.path.join('static', 'heatmap.png')
     plt.savefig(heatmap_path)
     plt.close()
@@ -93,6 +124,28 @@ def nifty50():
     profitable_stocks = {k: v for k, v in data.items() if v['Trend'] == 'up'}
     non_profitable_stocks = {k: v for k, v in data.items() if v['Trend'] == 'down'}
     return render_template('nifty50.html', nifty50_data=data, profitable_stocks=profitable_stocks, non_profitable_stocks=non_profitable_stocks, heatmap_path=heatmap_path)
+
+@app.route('/nifty100')
+def nifty100():
+    data = fetch_nifty100_data()
+    heatmap_path = generate_heat_map(data)
+    profitable_stocks = {k: v for k, v in data.items() if v['Trend'] == 'up'}
+    non_profitable_stocks = {k: v for k, v in data.items() if v['Trend'] == 'down'}
+    return render_template('nifty100.html', nifty100_data=data, profitable_stocks=profitable_stocks, non_profitable_stocks=non_profitable_stocks, heatmap_path=heatmap_path)
+
+@app.route('/stock/<ticker>')
+def stock_details(ticker):
+    # Fetch historical data for the selected stock
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=30 * 1)  # 5 years
+    stock_data = yf.download(ticker, start=start_date, end=end_date)
+
+    # Process the historical data as needed
+    # For example, calculate profit and loss over the last 5 years
+
+    # Render the new page with the stock details
+    return render_template('stock_details.html', ticker=ticker, stock_data=stock_data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

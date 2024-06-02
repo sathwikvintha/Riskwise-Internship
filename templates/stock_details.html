@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ ticker }} - Stock Details</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Add any additional CSS styling here -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            display: flex;
+            flex-direction:column;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .container canvas {
+            max-width: 1500px;
+            max-height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Nifty50 Stocks Dashboard</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('index') }}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('nifty50') }}">Nifty50</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('nifty50') }}">Nifty100</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h2>{{ ticker }} - Stock Details of Last one Month</h2>
+        <canvas id="stockChart" width="400" height="200"></canvas>
+        <canvas id="volumePieChart" width="400" height="200"></canvas>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js" integrity="sha384-7BKDiWxrFI3eMllP5BzFi9SHDN33T2qEMfYEL/BuqRU6lu7u4d83xzJzwi4Z+XjB" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shCk5PLbIy9rBf81jPVgce0odDhPex4t+0pbF" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function(){
+            $('.navbar-toggler').click(function(){
+                $('.navbar-collapse').toggleClass('show');
+            });
+        });
+    </script>
+    <script>
+        // Fetch the stock data from Flask
+        var stockData = {{ stock_data.to_dict(orient='split') | tojson }};
+
+        // Extract the dates, closing prices, and trading volume from the data
+        var dates = stockData['index'];
+        var closingPrices = stockData['data'].map(row => row[4]);
+        var volumeData = stockData['data'].map(row => row[5]);
+
+        // Create a line chart for closing prices using Chart.js
+        var ctx = document.getElementById('stockChart').getContext('2d');
+        var stockChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Closing Price',
+                    data: closingPrices,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'year'
+                        }
+                    }]
+                }
+            }
+        });
+
+        // Create a pie chart for trading volume using Chart.js
+        var volumePieCtx = document.getElementById('volumePieChart').getContext('2d');
+        var volumePieChart = new Chart(volumePieCtx, {
+            type: 'pie',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Volume',
+                    data: volumeData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)'
+                    ]
+                }]
+            }
+        });
+    </script>
+</body>
+</html>

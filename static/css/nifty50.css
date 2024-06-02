@@ -6,3 +6,9 @@ body{
     width: 100%;
     height: auto;
 }
+.up {
+    background-color: #d4edda;
+}
+.down {
+    background-color: #f8d7da;
+}
